@@ -1,0 +1,69 @@
+from calibre.web.feeds.news import BasicNewsRecipe
+
+
+class MyNewsRecipe(BasicNewsRecipe):
+    title = 'learn2love'
+    description = 'learn2love'
+    cover_url = 'https://love2d.org/favicon.ico'
+    simultaneous_downloads = 10
+    url_pre = 'https://rvagamejams.com/learn2love/'
+    url_ind = ''
+    keep_only_tags = [{ 'class': 'normal' }]
+    no_stylesheets = False
+    resolve_internal_links = True
+    auto_cleanup = True
+
+
+    def parse_index(self):
+        soup = self.index_to_soup(self.url_pre+self.url_ind)#目录页
+        div = soup.find('ul', { 'class': 'summary' })#目录页的寻找范围
+        results = []
+        isFirst = True
+        for link in div.findAll('ul',{'class':'articles'}):
+            tmplist = []
+            if isFirst:
+                isFirst = False
+                aa = link.find_previous_sibling('a').parent.find_previous_sibling('li')
+                title = self.tag_to_string(aa.find('a')).strip()
+                tmplist.append({'title':title,'url':self.url_pre + aa.find('a')['href']})
+                results.append((title,tmplist))
+                
+            tmplist = []
+            aa = link.find_previous_sibling('a')
+            title = self.tag_to_string(aa).strip()
+            tmplist.append({'title':title,'url':self.url_pre + aa['href']})
+            for m in link.findAll('li'):
+                til = self.tag_to_string(m.find('a')).strip()
+                url = self.url_pre + m.find('a')['href']
+                a = { 'title': til, 'url': url }
+                tmplist.append(a)
+            results.append((title,tmplist))
+        return results
+
+    def get_extra_css(self):
+        return u'''
+         .hljs-comment  {  color: #8e908c; }
+         .hljs-title  {  color: #8e908c; }
+         .hljs-variable  { color: #c82829;}
+         .hljs-tag  { color: #c82829;}
+         .hljs-regexp  { color: #c82829;}
+         .hljs-deletion { color: #c82829;}
+         .hljs-number {color: #f5871f;}
+         .hljs-preprocessor{color: #f5871f;}
+         .hljs-pragma{color: #f5871f;}
+         .hljs-built_in{color: #f5871f;}
+         .hljs-literal{color: #f5871f;}
+         .hljs-params{color: #f5871f;}
+         .hljs-constant{color: #f5871f;}
+         .hljs-string{  color: #718c00;}
+         .hljs-value{  color: #718c00;}
+         .hljs-inheritance{  color: #718c00;}
+         .hljs-header{  color: #718c00;}
+         .hljs-addition{  color: #718c00;}
+         .hljs-function{  color: #4271ae;}
+         .hljs-keyword{  color: #8959a8;}
+         .hljs { display: block; background: white; color: #4d4d4c;padding: 0.5em; }
+         .template_comment {color: #93a1a1;}
+         pre>code { display: inline;    max-width: initial;    padding: 0;    margin: 0;    overflow: initial; line-height: inherit; font-size: .85em; white-space: pre;background: #f5ecec;}
+         pre {background: #f5ecec;}
+        '''
